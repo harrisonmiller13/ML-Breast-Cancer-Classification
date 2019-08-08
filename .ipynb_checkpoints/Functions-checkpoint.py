@@ -1,94 +1,101 @@
-#%%
-import pandas as pd
-import matplotlib.pyplot as plt
-import plotly.express as px
-import numpy as np
-import tpot as tp
-from sklearn.decomposition import PCA
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
-#%%
-# nuclei_measurements = pd.read_csv('wdbc.data', names = ['ID','Diagnosis', 'radius',
-#                                         'texture','perimeter','area',
-#                                         'smoothness','compactness',
-#                                         'concavity','concave_points',
-#                                         'symmetry','fractal_dimension'
-
-#  ])
-cell_data = pd.read_csv('breast-cancer-wisconsin.data',names=['id_number','Clump Thickness', 'Uniformity of Cell Size',
-                 'Uniformity of Cell Shape', 'Marginal Adhesion', 
-                 'Single Epithelial Cell Size','Bare Nuclei',
-                 'Bland Chromatin','Normal Nucleoli','Mitosis','Class'])
 
 
-#%%
-# nuclei_measurements.head()
-cell_data.head()
-
-#%%
-fig = px.bar(cell_data, x = 'Class', color = 'Class')
-fig.show()
-
-#%%
-cell_data.isnull().count
-
-#%%
-target = cell_data['Class']
-cell_data.drop('Class', axis = 1, inplace = True)
 
 
-#%%
-target.head()
-
-#%%
-cell_data.dtypes
-
-#%%
-cell_data.head()
-
-#%%
-cell_dummies = pd.get_dummies(cell_data)
-cell_dummies.head()
-
-#%%
-cell_dummies_train, cell_dummies_test, target_train, target_test = train_test_split(cell_dummies,target,test_size = 0.25)
-
-
-#%%
-tree_clf = DecisionTreeClassifier(max_depth = 5)
-tree_clf.fit(cell_dummies_train,target_train)
-
-#%%
-tree_clf.feature_importances_
-
-#%%
+def plot_ROC_curve(x_test,y_test,model):
+    """
+    enter your features test set, target test set, and the model you are using
+    
+    plots an ROC curve and AUC value as the legend
+    
+    """
+    import seaborn as sns
+    sns.set()
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import roc_curve
+    from sklearn.metrics import roc_auc_score
+    
+    probs = model.predict_proba(x_test)
+    probs = probs[:,1]
+    fpr, tpr, thresholds = roc_curve(y_test,probs, pos_label= 4)
+    auc = roc_auc_score(y_test, probs)
+    plt.figure(figsize=(12,8))
+    plt.title("ROC",fontsize = 14)
+    plt.xlabel("FPR", fontsize = 12)
+    plt.ylabel("TPR", fontsize = 12)
+    plt.plot([0,1],[0,1], linestyle='--')
+    plt.plot(fpr, tpr, marker = '.', linewidth = 4)
+    plt.legend(["AUC=%.3f"%auc],loc = 'lower right',prop={'size': 30})
+    plt.show()
+    
 def plot_feature_importances(model):
-    n_features = cell_dummies_train.shape[1]
+    n_features = features_train.shape[1]
     plt.figure(figsize=(8,15))
     plt.barh(range(n_features), model.feature_importances_, align='center') 
-    plt.yticks(np.arange(n_features), cell_dummies_train.columns.values) 
+    plt.yticks(np.arange(n_features), features_train.columns.values) 
     plt.xlabel("Feature importance")
     plt.ylabel("Feature")
 
+def plot_confusion_matrix(y_test,model_pred):
+    from sklearn.metrics import confusion_matrix,classification_report,accuracy_score
+    import seaborn as sns
+    sns.set()
+    import matplotlib.pyplot as plt
+    
+    conf_mat = confusion_matrix(y_true=y_test, y_pred=model_pred)
+    ax= plt.subplot()
+    sns.heatmap(conf_mat, annot=True, ax = ax, fmt = 'g', cmap = 'Greens'); 
+    ax.set_xlabel('Predicted');ax.set_ylabel('Expected'); 
+    ax.set_title('Confusion Matrix'); 
+    ax.xaxis.set_ticklabels(['Benign', 'Malignant']);
+    ax.yaxis.set_ticklabels(['Benign', 'Malignant']);
+    print(classification_report(y_test,model_pred))
+    
+    
+def plot_2d_space(X, y, label='Classes'):   
+    import numpy as np
+    import matplotlib.pyplot as plt
+    colors = ['#1F77B4', '#FF7F0E']
+    markers = ['o', 's']
+    for l, c, m in zip(np.unique(y), colors, markers):
+        plt.scatter(
+            X[y==l, 0],
+            X[y==l, 1],
+            c=c, label=l, marker=m
+        )
+    plt.title(label)
+    plt.legend(loc='upper right')
+    plt.show()
+    
+def get_target_counts(dataframe):
+    target_count = dataframe.Class.value_counts()
+    print('Benign:', target_count[2])
+    print('Malignant:', target_count[4])
+    print('Proportion:', round(target_count[2] / target_count[4], 2), ': 1')
+    target_count.plot(kind='bar', title='Count (target)');
+    
 
-
-#%%
-plot_feature_importances(tree_clf)
-
-#%%
-pred = tree_clf.predict(cell_dummies_test)
-print(confusion_matrix(target_test,pred))
-print(classification_report(target_test,pred))
-
-#%%
-print("Testing Accuracy for Decision Tree Classifier: {:.4}%".format(accuracy_score(target_test, pred) * 100))
-
-#%%
-#TPOT
-from tpot import TPOTClassifier
-tpot = TPOTClassifier(generations= 100, population_size= 100, verbosity= 2,n_jobs= 1)
-tpot.fit(cell_dummies_train,target_train)
-
-#%%
+    
+def prepare_data(dataframe):
+    import pandas as pd
+    bc_data_with_dummies = pd.get_dummies(dataframe)
+    bc_data_with_dummies.set_index('id_number', inplace = True)
+    bc_data_with_dummies.drop(['id_number.1',
+                               'Diagnosis_B',
+                               'Diagnosis_M'], axis = 1, inplace = True)
+    bc_data_full = bc_data_with_dummies.interpolate(method = 'linear', axis = 1)
+    return bc_data_full
+   
+    
+# def train_model(dataframe):
+#     from imblearn.over_sampling import SMOTE
+#     from sklearn.ensemble import ExtraTreesClassifier
+#     from sklearn.model_selection import train_test_split
+    
+#     features = bc_data_full
+#     X = bc_data_full
+#     y = target
+#     features_train,features_test,target_train,target_test = train_test_split(X,
+#                                                                              y,
+#                                                                              test_size = 0.25,
+#                                                                              random_state = 1)
