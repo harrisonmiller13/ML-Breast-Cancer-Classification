@@ -28,11 +28,35 @@ def plot_ROC_curve(x_test,y_test,model):
     plt.legend(["AUC=%.3f"%auc],loc = 'lower right',prop={'size': 30})
     plt.show()
     
-def plot_feature_importances(model):
-    n_features = features_train.shape[1]
+def plot_precision_recall_curve(x_test,x_train,y_test,model):
+    
+    from sklearn.metrics import precision_recall_curve
+    from sklearn.metrics import f1_score
+    from sklearn.metrics import auc
+    from sklearn.metrics import average_precision_score
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set()
+    
+    probs = model.predict_proba(x_test)
+    probs = probs[:,1]
+    yhat = model.predict(x_train)
+    precision, recall, thresholds = precision_recall_curve(y_test,probs, pos_label= 4)
+    plt.figure(figsize=(12,8))
+    plt.title("Precision-Recall Curve",fontsize = 14)
+    plt.xlabel("Recall", fontsize = 12)
+    plt.ylabel("Precision", fontsize = 12)
+    plt.plot([0,1],[0,1], linestyle='--')
+    plt.plot(recall,precision, marker ='.', linewidth = 4)
+    plt.show()
+
+def plot_feature_importances(x_train,model):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    n_features = x_train.shape[1]
     plt.figure(figsize=(8,15))
     plt.barh(range(n_features), model.feature_importances_, align='center') 
-    plt.yticks(np.arange(n_features), features_train.columns.values) 
+    plt.yticks(np.arange(n_features), x_train.columns.values) 
     plt.xlabel("Feature importance")
     plt.ylabel("Feature")
 
