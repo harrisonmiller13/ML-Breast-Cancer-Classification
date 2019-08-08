@@ -6,7 +6,7 @@ def plot_ROC_curve(x_test,y_test,model):
     """
     enter your features test set, target test set, and the model you are using
     
-    plots an ROC curve and AUC value as the legend
+    plots a ROC curve and AUC value as the legend
     
     """
     import seaborn as sns
@@ -29,7 +29,12 @@ def plot_ROC_curve(x_test,y_test,model):
     plt.show()
     
 def plot_precision_recall_curve(x_test,x_train,y_test,model):
+    """
+    enter your features test set, features training set, target test set, and model you are using
     
+    plots a precision recall curve
+    
+    """
     from sklearn.metrics import precision_recall_curve
     from sklearn.metrics import f1_score
     from sklearn.metrics import auc
@@ -51,6 +56,12 @@ def plot_precision_recall_curve(x_test,x_train,y_test,model):
     plt.show()
 
 def plot_feature_importances(x_train,model):
+    """
+    input your feature training set and model
+    
+    plots feature importance to the model
+    
+    """
     import matplotlib.pyplot as plt
     import numpy as np
     n_features = x_train.shape[1]
@@ -61,6 +72,12 @@ def plot_feature_importances(x_train,model):
     plt.ylabel("Feature")
 
 def plot_confusion_matrix(y_test,model_pred):
+    """
+    input your target test set and model predictions
+    
+    plots a confusion matrix and classification report
+    
+    """
     from sklearn.metrics import confusion_matrix,classification_report,accuracy_score
     import seaborn as sns
     sns.set()
@@ -76,7 +93,12 @@ def plot_confusion_matrix(y_test,model_pred):
     print(classification_report(y_test,model_pred))
     
     
-def plot_2d_space(X, y, label='Classes'):   
+def plot_2d_space(X, y, label='Classes'):
+    """
+    input your features, target class, and plot title
+    
+    returns a scatterplot
+    """
     import numpy as np
     import matplotlib.pyplot as plt
     colors = ['#1F77B4', '#FF7F0E']
@@ -92,6 +114,12 @@ def plot_2d_space(X, y, label='Classes'):
     plt.show()
     
 def get_target_counts(dataframe):
+    """
+    input dataframe 
+    
+    return a plot of target class
+    
+    """
     target_count = dataframe.Class.value_counts()
     print('Benign:', target_count[2])
     print('Malignant:', target_count[4])
@@ -101,15 +129,34 @@ def get_target_counts(dataframe):
 
     
 def prepare_data(dataframe):
+    """
+    input dataframe
+    cleans dataframe for use in model
+    
+    """
     import pandas as pd
     bc_data_with_dummies = pd.get_dummies(dataframe)
     bc_data_with_dummies.set_index('id_number', inplace = True)
     bc_data_with_dummies.drop(['id_number.1',
                                'Diagnosis_B',
-                               'Diagnosis_M'], axis = 1, inplace = True)
+                               'Diagnosis_M',
+                              'Bare Nuclei_?'], axis = 1, inplace = True)
     bc_data_full = bc_data_with_dummies.interpolate(method = 'linear', axis = 1)
     return bc_data_full
    
+    
+def baseline_model(dataframe):
+    """
+    input dataframe
+    returns baseline prediction for each target
+    
+    """
+    target_count = dataframe.Class.value_counts()
+    print('Benign Baseline Prediction:',
+          round((target_count[2]/(target_count[2]+target_count[4]))*100),'%')
+    
+    print('Malignant Baseline Prediction:',
+          round((target_count[4]/(target_count[2]+target_count[4]))*100),'%')
     
 # def train_model(dataframe):
 #     from imblearn.over_sampling import SMOTE
