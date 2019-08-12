@@ -64,9 +64,12 @@ def plot_feature_importances(x_train,model):
     """
     import matplotlib.pyplot as plt
     import numpy as np
+    importances = model.feature_importances_
+#     indicies = np.argsort(importances)[::1]
+#     names = [n_features[i] for i in indicies]
     n_features = x_train.shape[1]
     plt.figure(figsize=(8,15))
-    plt.barh(range(n_features), model.feature_importances_, align='center') 
+    plt.barh(range(n_features), importances, align='center') 
     plt.yticks(np.arange(n_features), x_train.columns.values) 
     plt.xlabel("Feature importance")
     plt.ylabel("Feature")
